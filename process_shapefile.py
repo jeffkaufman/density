@@ -193,8 +193,6 @@ def compute_town_density(points_density_file, tl_file, points_town_density_file)
         continue
       
       name = feat.GetField(name_field)
-      if name != "Boston":
-        continue
 
       print "%s (%s/%s)" % (name, i, n_cities)
       
@@ -211,9 +209,11 @@ def compute_town_averages(points_town_density_file, town_density_file):
       t_pop = 0
       t_n = 0
       for line in inf:
-        lat, lng, neighbors, name = line.strip().split(4)
-        if name != prev_name and name is not None:
-          outf.write("%s %s %s %s\n" % (t_pop, t_n, t_n/t_pop, name))
+        lat, lng, neighbors, name = line.strip().split(" ", 4)
+        if name != prev_name:
+          if t_pop != 0:
+            outf.write("%s %s %s %s\n" % (t_pop, t_n, t_n/t_pop, name))
+          prev_name = name
           t_pop = 0
           t_n = 0
         t_pop += 1
