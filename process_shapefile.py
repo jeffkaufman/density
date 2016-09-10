@@ -168,7 +168,7 @@ def compute_density(points_file, points_density_file):
         sys.stdout.write(".")
         sys.stdout.flush()
 
-def compute_town_density(points_density_file, tl_file, town_density_file):
+def compute_town_density(points_density_file, tl_file, points_town_density_file):
   ds = ogr.Open(tl_file)
   if not ds:
     raise Exception("tl open failed: %s" % tl_file)
@@ -182,9 +182,9 @@ def compute_town_density(points_density_file, tl_file, town_density_file):
   with open(points_density_file) as inf:
     for line in inf:
       lat, lng, neighbors = line.strip().split()
-      points_density.append((float(lat), float(lng), float(neigbors)))
+      points_density.append((float(lat), float(lng), float(neighbors)))
 
-  with open(town_density_file, "w") as outf:
+  with open(points_town_density_file, "w") as outf:
     n_cities = len(lyr)
     for i, feat in enumerate(lyr):
       geom = feat.GetGeometryRef()
@@ -198,14 +198,27 @@ def compute_town_density(points_density_file, tl_file, town_density_file):
 
       print "%s (%s/%s)" % (name, i, n_cities)
       
-      total_points = 0
-      total_neighbors = 0
-      for lat, lng, neighbors in points_density:
+      for i, (lat, lng, neighbors) in enumerate(points_density):
         if geom.Intersects(make_ogr_point(lng, lat)):
-          total_points += 1
-          total_neighbors += neighbors
-      outf.write("%s %s\n" % (name, total_neighbors / total_points))
-      outf.flush()
+          outf.write("%s %s %s %s\n" % (lat, lng, neighbors, name))
+          if i % 100 == 0:
+            outf.flush()
+
+def compute_town_averages(points_town_density_file, town_density_file):
+  with open(points_town_density_file) as inf:
+    with open(town_density_file, "w") as outf:
+      prev_name = None
+      t_pop = 0
+      t_n = 0
+      for line in inf:
+        lat, lng, neighbors, name = line.strip().split(4)
+        if name != prev_name and name is not None:
+          outf.write("%s %s %s %s\n" % (t_pop, t_n, t_n/t_pop, name))
+          t_pop = 0
+          t_n = 0
+        t_pop += 1
+        t_n += float(neighbors)
+      outf.write("%s %s %s %s\n" % (t_pop, t_n, t_n/t_pop, name))
 
 # To get the input files, download:
 #    http://www2.census.gov/geo/tiger/TIGER2010/PLACE/2010/tl_2010_${STATE}_place10.zip
@@ -216,6 +229,7 @@ def start(tabblock_file, tl_file):
   points_file = "%s.points" % tabblock_file
   points_sorted_file = "%s.points_sorted" % tabblock_file
   points_density_file = "%s.points_density" % tabblock_file
+  points_town_density_file = "%s.points_town_density" % tabblock_file
   town_density_file = "%s.town_density" % tabblock_file
 
   if not os.path.exists(points_file):
@@ -224,8 +238,10 @@ def start(tabblock_file, tl_file):
     sort_points(points_file, points_sorted_file)
   if not os.path.exists(points_density_file):
     compute_density(points_file, points_density_file)
+  if not os.path.exists(points_town_density_file):
+    compute_town_density(points_density_file, tl_file, points_town_density_file)
   if not os.path.exists(town_density_file):
-    compute_town_density(points_density_file, tl_file, town_density_file)
+    compute_town_averages(points_town_density_file, town_density_file)
 
 if __name__ == "__main__":
   start(*sys.argv[1:])
