@@ -1,4 +1,9 @@
-# Usage: python process_shapefile.py tabblock2010_??_pophu.shp
+# Usage: python process_shapefile.py tabblock2010_??_pophu.shp tl_2010_??_place10.zip
+
+# Derived from makedots.py at https://github.com/meetar/dotmap, which either was written
+# by Brendan Martin-Anderson, or Peter Richardson.  Since that's under the MIT license, so
+# is this.
+
 import sys
 import os
 from random import uniform
