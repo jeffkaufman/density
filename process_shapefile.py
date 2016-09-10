@@ -114,11 +114,10 @@ def generate_points(tabblock_file, points_file):
         while True:
           samplepoint = make_ogr_point(uniform(ll, rr), uniform(bb, tt))
           if geom.Intersects(samplepoint):
+            # lat, lng
+            outf.write("%s %s\n" % (samplepoint.GetY(), samplepoint.GetX()))
+            outf.flush()
             break
-
-          # lat, lng
-          outf.write("%s %s\n" % (samplepoint.GetY(), samplepoint.GetX()))
-          outf.flush()
 
 def sort_points(points_file, points_sorted_file):
   subprocess.call(['sort', '-n' , points_file], stdout=open(points_sorted_file, 'w'))
