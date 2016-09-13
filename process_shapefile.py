@@ -207,21 +207,20 @@ def compute_town_density(points_density_file, tl_file, points_town_density_file)
             outf.flush()
 
 def compute_town_averages(points_town_density_file, town_density_file):
+  pop_totals = defaultdict(int)
+  neighbor_totals = defaultdict(float)
+
   with open(points_town_density_file) as inf:
-    with open(town_density_file, "w") as outf:
-      prev_name = None
-      t_pop = 0
-      t_n = 0
-      for line in inf:
-        lat, lng, neighbors, name = line.strip().split(" ", 4)
-        if name != prev_name:
-          if t_pop != 0:
-            outf.write("%s %s %s %s\n" % (t_pop, t_n, t_n/t_pop, name))
-          prev_name = name
-          t_pop = 0
-          t_n = 0
-        t_pop += 1
-        t_n += float(neighbors)
+    for line in inf:
+      line = line.strip()
+      lat, lng, neighbors, name = line.split(" ", 3)
+
+      pop_totals[name] += 1
+      neighbor_totals[name] += float(neighbors)
+  with open(town_density_file, "w") as outf:
+    for name in sorted(pop_totals):
+      t_pop = pop_totals[name]
+      t_n = neighbor_totals[name]
       outf.write("%s %s %s %s\n" % (t_pop, t_n, t_n/t_pop, name))
 
 # To get the input files, download:
